@@ -7,10 +7,16 @@ from ultralytics import YOLO
 
 app = Flask(__name__)
 
-MODEL_PATH = "runs/detect/train/weights/best.pt"
-VIDEO_SOURCE = 0
-TIME_THRESHOLD = 5
-SAVE_EVIDENCE = True
+# Configuration via environment variables for Render compatibility
+MODEL_PATH = os.environ.get("MODEL_PATH", "runs/detect/train/weights/best.pt")
+VIDEO_SOURCE = os.environ.get("VIDEO_SOURCE", "0")
+
+# Convert to integer if it's a numeric webcam index
+if isinstance(VIDEO_SOURCE, str) and VIDEO_SOURCE.isdigit():
+    VIDEO_SOURCE = int(VIDEO_SOURCE)
+
+TIME_THRESHOLD = int(os.environ.get("TIME_THRESHOLD", "5"))
+SAVE_EVIDENCE = os.environ.get("SAVE_EVIDENCE", "True").lower() == "true"
 
 ROI_POINTS = np.array([
     [200, 200],
@@ -19,6 +25,7 @@ ROI_POINTS = np.array([
     [200, 500]
 ])
 
+# Initialize model and capture
 model = YOLO(MODEL_PATH)
 cap = cv2.VideoCapture(VIDEO_SOURCE)
 
@@ -38,7 +45,8 @@ def generate_frames():
     while True:
         success, frame = cap.read()
         if not success:
-            break
+            time.sleep(1) # Wait and try again (useful for streams)
+            continue
 
         results = model.track(frame, persist=True, verbose=False)
 
@@ -100,9 +108,15 @@ def index():
     <html>
     <head>
         <title>Parking Violation Detection</title>
+        <style>
+            body { font-family: sans-serif; text-align: center; background: #1a1a1a; color: white; padding-top: 50px; }
+            img { border: 5px solid #333; border-radius: 8px; margin-top: 20px; max-width: 90%; }
+            h1 { color: #ff4b4b; }
+        </style>
     </head>
     <body>
         <h1>🚗 Live Parking Detection</h1>
+        <p>Source: """ + str(VIDEO_SOURCE) + """</p>
         <img src="/video" width="800">
     </body>
     </html>
@@ -116,4 +130,6 @@ def video():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Bind to PORT provided by Render
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
