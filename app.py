@@ -18,6 +18,9 @@ if isinstance(VIDEO_SOURCE, str) and VIDEO_SOURCE.isdigit():
 TIME_THRESHOLD = int(os.environ.get("TIME_THRESHOLD", "5"))
 SAVE_EVIDENCE = os.environ.get("SAVE_EVIDENCE", "True").lower() == "true"
 
+print(f"🚀 Starting app with VIDEO_SOURCE: {VIDEO_SOURCE}")
+print(f"📦 Using model: {MODEL_PATH}")
+
 ROI_POINTS = np.array([
     [200, 200],
     [600, 200],

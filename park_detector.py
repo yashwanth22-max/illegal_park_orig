@@ -7,7 +7,6 @@ from ultralytics import YOLO
 
 app = Flask(__name__)
 
-# ================== YOUR SETTINGS ==================
 MODEL_PATH = "runs/detect/train/weights/best.pt"
 VIDEO_SOURCE = 0
 TIME_THRESHOLD = 5
@@ -20,7 +19,6 @@ ROI_POINTS = np.array([
     [200, 500]
 ])
 
-# ================== LOAD MODEL ==================
 model = YOLO(MODEL_PATH)
 cap = cv2.VideoCapture(VIDEO_SOURCE)
 
@@ -31,7 +29,6 @@ if SAVE_EVIDENCE:
     os.makedirs("violations", exist_ok=True)
 
 
-# ================== FUNCTIONS ==================
 def point_in_roi(point, polygon):
     return cv2.pointPolygonTest(polygon, point, False) >= 0
 
@@ -84,17 +81,14 @@ def generate_frames():
                     color = (0, 255, 0)
                     label = "Outside"
 
-                # Draw
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
                 cv2.circle(frame, (cx, cy), 5, color, -1)
                 cv2.putText(frame, f"ID {int(track_id)} - {label}",
                             (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-        # Draw ROI
         cv2.polylines(frame, [ROI_POINTS], True, (255, 0, 0), 2)
 
-        # 🔥 IMPORTANT: Convert frame to web format
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
 
@@ -102,7 +96,6 @@ def generate_frames():
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 
-# ================== ROUTES ==================
 @app.route('/')
 def index():
     return """
@@ -111,7 +104,7 @@ def index():
         <title>Parking Violation Detection</title>
     </head>
     <body>
-        <h1>🚗 Live Parking Detection</h1>
+        <h1> Live Parking Detection</h1>
         <img src="/video" width="800">
     </body>
     </html>
@@ -124,6 +117,5 @@ def video():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-# ================== RUN ==================
 if __name__ == "__main__":
     app.run(debug=True)
